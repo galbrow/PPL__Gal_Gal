@@ -1,0 +1,116 @@
+(define append 
+  (lambda(lst1 lst2)
+  (if (eq? '() lst1) lst2  
+      (if (eq? '() (cdr lst1))
+        (cons (car lst1) lst2)
+        (cons (car lst1) (append (cdr lst1) lst2))
+      )
+  )
+)
+)
+
+(define reverse 
+  (lambda (lst)
+      (if (eq? '() lst)
+        lst
+        (if (eq? '() (cdr lst))
+          lst
+          (append (reverse (cdr lst)) (cons (car lst) '()))
+        )
+      )
+  )
+)
+
+(define listLength
+  (lambda(lst num)
+  (if (eq? '() lst)
+    num
+    (if (eq? '() (cdr lst))
+      (+ num 1)
+      (listLength (cdr lst) (+ num 1))
+    )
+  )
+  )
+)
+
+
+(define dupItem
+  (lambda(num dup lst)
+    (if (> dup 0)
+      (dupItem num (- dup 1) (cons num lst))
+      lst
+    )
+  )
+)
+
+(define duplicateItems
+  (lambda(lst dupCount toReturn)
+    (if (eq? '() lst)
+      toReturn
+      (if (eq? '() (cdr lst))
+        (append toReturn (dupItem (car lst) (car dupCount) '()))
+        (duplicateItems (cdr lst) (cdr dupCount) (append toReturn (dupItem (car lst) (car dupCount) '())))
+      )
+    )
+  )
+)
+
+(define duplicate-items
+   (lambda(lst dup-count)
+        (if (> (listLength lst 0) (listLength dup-count 0))
+          (duplicate-items lst (append dup-count dup-count))
+          (duplicateItems lst dup-count '())
+        )
+   )
+)
+(define fixedList
+  (lambda (num lst)
+    (if (eq? '() lst)
+      '()
+      (if (eq? '() (cdr lst))
+        (if (= num (car lst))
+          '()
+          lst
+        )
+        (if (= num (car lst))
+          (fixedList num (cdr lst))
+          (cons (car lst) (fixedList num (cdr lst)))
+        )
+      )
+    )
+  )
+)
+
+(define payment
+  (lambda (n coins-lst)
+      (if (= n 0)
+        1
+        (if (< n 0)
+          0
+          (if (eq? '() coins-lst)
+            0
+            (+ (payment (- n (car coins-lst)) (cdr coins-lst)) (payment n (fixedList (car coins-lst) (cdr coins-lst))))
+          )
+      )
+    )
+  )
+)
+
+(define composeHelp
+  (lambda (f x n)
+    (if (= n 0)
+      x
+      (composeHelp f (f x) (- n 1))
+    )
+  )
+)
+
+
+(define compose-n
+  (lambda(f n)
+    (lambda(x)
+      (composeHelp f x n)
+    )
+  )
+)
+
