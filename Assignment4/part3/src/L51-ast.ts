@@ -335,8 +335,12 @@ const parseClassExp = (params: Sexp[]): Result<ClassExp> =>
     (params.length != 4) || (params[0] != ':') ? makeFailure(`class must have shape (class [: <type>]? <fields> <methods>) - got ${params.length} params instead`) :
     parseGoodClassExp(params[1], params[2], params[3]);
 
-const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>
-    makeFailure("TODO parseGoodClassExp");
+const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>{
+    const name : TVar = makeTVar(typeName.toString())
+    const varD : Result<VarDecl[]> = mapResult(v => parseVarDecl(v),isArray(varDecls)? varDecls:[])
+    const bindingsExps : Result<Binding[]> = isGoodBindings(bindings)? parseBindings(isArray(bindings)?bindings:[]): makeFailure("Invalid bindings")
+    return bind(varD,v=>bind(bindingsExps,b => makeOk(makeClassExp(name,v,b))))
+}
 
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>
@@ -447,11 +451,17 @@ const unparseClassExp = (ce: ClassExp, unparseWithTVars?: boolean): Result<strin
 
 // L51: Collect named types in AST
 // Collect class expressions in parsed AST so that they can be passed to the type inference module
+export const parseProgramClasses = (exp:Exp ,exps: Exp[], classes: ClassExp[]): ClassExp[] =>{
+    const newClasses = isClassExp(exp)? classes.concat(exp) : classes
+    return exps.length === 0 ? newClasses : parseProgramClasses(first(exps),rest(exps),newClasses)
+} 
 
-export const parsedToClassExps = (p: Parsed): ClassExp[] => 
-    // TODO parsedToClassExps
-    [];
-
+export const parsedToClassExps = (p: Parsed): ClassExp[] => {
+    return isExp(p)?
+    isClassExp(p)? [p] : []
+    : // program expression
+    parseProgramClasses(first(p.exps),rest(p.exps),[])
+}
 // L51 
 export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 
     makeClassTExp(ce.typeName.var, map((binding: Binding) => [binding.var.var, binding.var.texp], ce.methods));

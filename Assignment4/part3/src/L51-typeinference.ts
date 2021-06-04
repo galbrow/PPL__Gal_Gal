@@ -103,8 +103,21 @@ const checkNoOccurrence = (tvar: T.TVar, te: T.TExp, exp: A.Exp): Result<true> =
 // For each class (class : typename ...) add a pair <class.typename classTExp> to TEnv
 export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
     // TODO makeTEnvFromClasses
-    return E.makeEmptyTEnv();
+    const tenv = E.makeEmptyTEnv()
+    const classes : A.ClassExp[] = A.parsedToClassExps(parsed)
+    const className = R.map(c => c.typeName,classes)
+    const classTexp = R.map(c =>{
+        // const methodT = R.map(m=>typeofExp(m,tenv),c.methods)
+    },classes)
+    return E.makeEmptyTEnv()
 }
+
+// export const makeExtEnvClass = (classes: A.ClassExp[], tenv: E.EmptyTEnv): E.TEnv => {
+//     if (classes.length === 0)
+//         return tenv 
+//     const vars = R.map(f => f.var,classes[0].fields)
+//     const tVars = R.map(classes[0])
+// }
 
 // Purpose: Compute the type of a concrete expression
 export const inferTypeOf = (concreteExp: string): Result<string> =>
@@ -305,3 +318,5 @@ export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
 export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
     return makeFailure("TODO typeofClass");
 };
+
+

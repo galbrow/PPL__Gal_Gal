@@ -149,7 +149,7 @@ describe('L5 Type Inference', () => {
         });
         
         it('infers the type of a program with define and recursion', () => {
-            // expect(verifyTeOfExprWithInference(`(L5 (define n 1) (if #t n (- n 1)))`, 'number')).to.deep.equal(makeOk(true));
+            expect(verifyTeOfExprWithInference(`(L5 (define n 1) (if #t n (- n 1)))`, 'number')).to.deep.equal(makeOk(true));
             expect(verifyTeOfExprWithInference(`(L5 (define fact (lambda (n) (if (= n 1) 1 (* n (fact (- n 1)))))) (fact 2))`, 'number')).to.deep.equal(makeOk(true));
         });
 
