@@ -11,7 +11,6 @@ type PromisedStore<K, V> = {
 
 export function makePromisedStore<K, V>(): PromisedStore<K, V> {
     const promiseStore = new Map(); //check if const is ok
-
     return {
         get(key: K) {
             return promiseStore.has(key)? Promise.resolve(promiseStore.get(key)) : Promise.reject(MISSING_KEY)
@@ -86,6 +85,28 @@ export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (x:T) => R): () 
 /* 2.4 */
 // you can use 'any' in this question
 
-// export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...(???)[]]): Promise<any> {
-//     ???
-// }
+export async function waterfallHelper(y:any,fns: ((x:any) => Promise<any>)[]): Promise<any>{
+    if(fns.length === 0){
+        fns[0](y)
+        .catch(_ => setTimeout(() => fns[0](y),2.0*1000))
+        .catch(_ => setTimeout(() => fns[0](y),2.0*1000))
+        .catch(_=>Promise.reject())
+    }
+    else{
+    fns[0](y)
+    .then(x =>waterfallHelper(x,fns.slice(1))).catch(_ => setTimeout(() => fns[0](y),2.0*1000))
+    .then(x =>waterfallHelper(x,fns.slice(1))).catch(_ => setTimeout(() => fns[0](y),2.0*1000))
+    .then(x =>waterfallHelper(x,fns.slice(1))).catch(_=>Promise.reject())
+    }
+}
+
+export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...((x:any) => Promise<any>)[]]): Promise<any> {
+    if(fns.length === 0)
+        return Promise.reject()
+    else {
+        return fns[0]()
+        .then(x => waterfallHelper(x, fns.slice(1))).catch(() => setTimeout(() => fns[0](),2.0*1000))
+        .then(x => waterfallHelper(x, fns.slice(1))).catch(() => setTimeout(() => fns[0](),2.0*1000))
+        .then(x => waterfallHelper(x, fns.slice(1))).catch(() => Promise.reject)
+    }
+}

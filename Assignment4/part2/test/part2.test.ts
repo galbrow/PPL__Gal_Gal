@@ -3,7 +3,7 @@
 import chai, { expect } from 'chai';
 
 // import { , asyncWaterfallWithRetry, getAll, lazyFilter, lazyMap, makePromisedStore, MISSING_KEY } from '../src/part2';
-import {makePromisedStore, MISSING_KEY, getAll, asycMemo, lazyFilter, lazyMap} from '../src/part2'
+import {asyncWaterfallWithRetry,makePromisedStore, MISSING_KEY, getAll, asycMemo, lazyFilter, lazyMap} from '../src/part2'
 import chaiAsPromised from 'chai-as-promised'
 
 chai.use(chaiAsPromised)
@@ -70,20 +70,20 @@ describe('2.3 (lazy generators)', () => {
     })
 })
 
-// describe('2.4 (asyncWaterfallWithRetry)', () => {
-//     it('executes sequence', async () => {
-//         const v = await asyncWaterfallWithRetry([async () => 1, async v => v + 1, async v => v * 2 ])
-//         expect(v).to.equal(4)
-//     })
+describe('2.4 (asyncWaterfallWithRetry)', () => {
+    it('executes sequence', async () => {
+        const v = await asyncWaterfallWithRetry([async () => 1, async v => v + 1, async v => v * 2 ])
+        expect(v).to.equal(4)
+    })
 
-//     it('retries twice', async () => {
-//         let attempt = 1
-//         const v = await asyncWaterfallWithRetry([async () => 1, async v => {
-//             if (attempt == 3)
-//                 return v + 1
-//             attempt += 1
-//             throw Error()
-//         }, async v => v * 2 ])
-//         expect(v).to.equal(4)
-//     }).timeout(5000)
-// })
+    it('retries twice', async () => {
+        let attempt = 1
+        const v = await asyncWaterfallWithRetry([async () => 1, async v => {
+            if (attempt == 3)
+                return v + 1
+            attempt += 1
+            throw Error()
+        }, async v => v * 2 ])
+        expect(v).to.equal(4)
+    }).timeout(5000)
+})
