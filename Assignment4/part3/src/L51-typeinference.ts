@@ -8,7 +8,8 @@ import * as E from "../imp/TEnv";
 import * as T from "./TExp51";
 import { allT, first, rest, isEmpty } from "../shared/list";
 import { isNumber, isString } from '../shared/type-predicates';
-import { Result, makeFailure, makeOk, bind, safe2, zipWithResult, mapResult } from "../shared/result";
+import { Result, makeFailure, makeOk, bind, safe2, zipWithResult, mapResult, isOk } from "../shared/result";
+import { makeExtEnv } from "../imp/L5-env";
 
 // Purpose: Make type expressions equivalent by deriving a unifier
 // Return an error if the types are not unifiable.
@@ -102,22 +103,19 @@ const checkNoOccurrence = (tvar: T.TVar, te: T.TExp, exp: A.Exp): Result<true> =
 // so that the user defined types are known to the type inference system.
 // For each class (class : typename ...) add a pair <class.typename classTExp> to TEnv
 export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
-    // TODO makeTEnvFromClasses
     const tenv = E.makeEmptyTEnv()
     const classes : A.ClassExp[] = A.parsedToClassExps(parsed)
-    const className = R.map(c => c.typeName,classes)
-    const classTexp = R.map(c =>{
-        // const methodT = R.map(m=>typeofExp(m,tenv),c.methods)
+    const className : string[] = R.map(c => c.typeName.var,classes)
+    const classTexp : T.ClassTExp[] = R.map(c =>{
+        const methodT : [string,T.TExp][] = R.map(m =>{
+            const helper = typeofExp(m.val,tenv)
+            const helperV : T.TExp = isOk(helper)? helper.value : T.makeVoidTExp()
+            return [m.var.var,helperV]
+        },c.methods)
+        return c.typeName.var, T.makeClassTExp(c.typeName.var,methodT)
     },classes)
-    return E.makeEmptyTEnv()
+    return E.makeExtendTEnv(className,classTexp,tenv)
 }
-
-// export const makeExtEnvClass = (classes: A.ClassExp[], tenv: E.EmptyTEnv): E.TEnv => {
-//     if (classes.length === 0)
-//         return tenv 
-//     const vars = R.map(f => f.var,classes[0].fields)
-//     const tVars = R.map(classes[0])
-// }
 
 // Purpose: Compute the type of a concrete expression
 export const inferTypeOf = (concreteExp: string): Result<string> =>
@@ -251,7 +249,6 @@ export const typeofLetrec = (exp: A.LetrecExp, tenv: E.TEnv): Result<T.TExp> => 
 // Purpose: compute the type of a define
 // Typing rule:
 //   (define (var : texp) val)
-// TODO - write the typing rule for define-exp
 export const typeofDefine = (exp: A.DefineExp, tenv: E.TEnv): Result<T.VoidTExp> => {
     const tVal: Result<T.TExp> = typeofExp(exp.val, tenv)
     const s = safe2((varTE: T.TExp, valTE: T.TExp) => checkEqualType(varTE, valTE, exp))(makeOk(exp.var.texp), tVal);
@@ -300,7 +297,6 @@ export const typeofLit = (exp: A.LitExp): Result<T.TExp> =>{
 // Purpose: compute the type of a set! expression
 // Typing rule:
 //   (set! var val)
-// TODO - write the typing rule for set-exp
 export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
     const valT : Result<T.TExp> = E.applyTEnv(tenv,exp.var.var);
     const TypeOfExpVal : Result<T.TExp> = typeofExp(exp.val,tenv)
@@ -316,7 +312,12 @@ export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
 //      type<method_k>(class-tenv) = mk
 // Then type<class(type fields methods)>(tend) = = [t1 * ... * tn -> type]
 export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
-    return makeFailure("TODO typeofClass");
+    //const tVarsName = R.map(T.makeFreshTVar,exp.fields)
+    const extTEnv = E.makeExtendTEnv(R.map(f => f.var,exp.fields),R.map(f => f.texp,exp.fields),tenv)
+    const methodsNames = R.map(m => m.var.var,exp.methods)
+    const constarint = mapResult(b => typeofExp(b.val,extTEnv),exp.methods)
+    return bind(constarint,texp=>makeOk(T.makeProcTExp(R.map(f => f.texp,exp.fields),T.makeClassTExp(exp.typeName.var,
+        R.zipWith((n,typeExp)=>[n,typeExp],methodsNames,texp)))))
 };
 
 
