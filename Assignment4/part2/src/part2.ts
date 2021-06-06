@@ -85,14 +85,14 @@ export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (x:T) => R): () 
 /* 2.4 */
 // you can use 'any' in this question
 
-const makeTimeOutPromise = async (func:(x:any) => Promise<any> ,val:any) : Promise<any> =>
-    await new Promise<any>((r) => setTimeout(() => r(func(val)) ,2000))
+const makeTimeOutPromise = async (func:(x:any) => Promise<any> ,value:any) : Promise<any> =>
+    await new Promise<any>((r) => setTimeout(() => r(func(value)) ,2000))
 
 export function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...((x:any) => Promise<any>)[]]): Promise<any> {
     return fns.slice(1).reduce(
-        (acc,func) =>
-        acc.then((val: any) => func(val)
-        .catch(() => makeTimeOutPromise(func,val))
-        .catch(() => makeTimeOutPromise(func,val)))
+        (acc : Promise<any>,func : (x:any) => Promise<any>) =>
+        acc.then((x: any) => func(x)
+        .catch(() => makeTimeOutPromise(func,x))
+        .catch(() => makeTimeOutPromise(func,x)))
         ,fns[0]())
 }
