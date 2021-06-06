@@ -85,28 +85,14 @@ export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (x:T) => R): () 
 /* 2.4 */
 // you can use 'any' in this question
 
-export async function waterfallHelper(y:any,fns: ((x:any) => Promise<any>)[]): Promise<any>{
-    if(fns.length === 0){
-        fns[0](y)
-        .catch(_ => setTimeout(() => fns[0](y),2.0*1000))
-        .catch(_ => setTimeout(() => fns[0](y),2.0*1000))
-        .catch(_=>Promise.reject())
-    }
-    else{
-    fns[0](y)
-    .then(x =>waterfallHelper(x,fns.slice(1))).catch(_ => setTimeout(() => fns[0](y),2.0*1000))
-    .then(x =>waterfallHelper(x,fns.slice(1))).catch(_ => setTimeout(() => fns[0](y),2.0*1000))
-    .then(x =>waterfallHelper(x,fns.slice(1))).catch(_=>Promise.reject())
-    }
-}
+const makeTimeOutPromise = (func:(x:any) => Promise<any> ,val:any) : Promise<any> =>
+    new Promise<any>((resolve) => setTimeout(() => resolve(func(val)) ,2000))
 
 export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...((x:any) => Promise<any>)[]]): Promise<any> {
-    if(fns.length === 0)
-        return Promise.reject()
-    else {
-        return fns[0]()
-        .then(x => waterfallHelper(x, fns.slice(1))).catch(() => setTimeout(() => fns[0](),2.0*1000))
-        .then(x => waterfallHelper(x, fns.slice(1))).catch(() => setTimeout(() => fns[0](),2.0*1000))
-        .then(x => waterfallHelper(x, fns.slice(1))).catch(() => Promise.reject)
-    }
+    return fns.slice(1).reduce(
+        (acc,func) =>
+        acc.then((val: any) => func(val)
+        .catch(async () => await makeTimeOutPromise(func,val))
+        .catch(async () => await makeTimeOutPromise(func,val)))
+        ,fns[0]())
 }
