@@ -78,12 +78,22 @@ describe('2.4 (asyncWaterfallWithRetry)', () => {
 
     it('retries twice', async () => {
         let attempt = 1
-        const v = await asyncWaterfallWithRetry([async () => 1, async v => {
+        let flag = 1;
+        const v = await asyncWaterfallWithRetry([async () =>{
+            //if(flag == 2){
+                return 1
+            //}
+               //else{
+        //flag +=1
+        //.throw Error()}}
+        }
+        , async v => {
             if (attempt == 3)
                 return v + 1
             attempt += 1
             throw Error()
         }, async v => v * 2 ])
+        //console.log(v)
         expect(v).to.equal(4)
     }).timeout(5000)
 })
