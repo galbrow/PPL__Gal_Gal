@@ -1,7 +1,10 @@
 :- module('ex5',
         [author/2,
          genre/2,
-         book/4
+         book/4,
+         authorOfGenre/2,
+         longestBook/2,
+         versatileAuthor/1
         ]).
 
 /*
@@ -39,4 +42,18 @@ book("The Hobbit", 4, 4, 250).
 book("The Lord of the Rings", 4, 4, 1250).
 
 % You can add more facts.
-% Fill in the Purpose, Signature as requested in the instructions here
+authorOfGenre(GenreName, AuthorName) :- author(AuthorId, AuthorName), genre(GenreId, GenreName), book(_, AuthorId, GenreId, _).
+
+books(AID,Len) :- author(AID,_),book(_,AID,_,Len).
+seek(AuthorID, List ) :-
+    findall( Y, books(AuthorID, Y), List ). 
+max(AuthorID,M) :- seek(AuthorID,L),max_list(L,M).
+bookLen(BookName,L) :- book(BookName,_,_,L).
+longestBook(AuthorId, BookName) :- max(AuthorId,MaximumBookLen),bookLen(BookName,MaximumBookLen).
+
+acce(L) :- not(length(L,0)),
+not(length(L,1)),
+not(length(L,2)).
+
+versatileAuthor(AuthorName) :- author(AID,AuthorName),
+    findall(GID,book(_,AID,GID,_) ,A),sort(A,L),acce(L).
